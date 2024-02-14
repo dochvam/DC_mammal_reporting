@@ -23,16 +23,14 @@ specs_to_drop <- c(
   "Canis familiaris", "Equus caballus", "Unknown Small Rodent"
 )
 
-ct_dat <- readxl::read_xlsx("data/final_DCCC_data.xlsx", sheet = 2) %>% 
-  filter(Actual.Long > -77.3) %>% 
-  filter(!Species.Name %in% specs_to_drop)
 
-ct_speccts <- ct_dat %>% 
-  count(Species.Name, Common.Name) %>% 
-  arrange(-n) 
-
-target_species <- ct_speccts$Species.Name[1:10]
+target_species <- c("Felis catus", "Sciurus carolinensis", "Rattus norvegicus" ,    
+                    "Odocoileus virginianus", "Procyon lotor", "Vulpes vulpes",
+                    "Didelphis virginiana", "Sylvilagus floridanus", "Tamias striatus",
+                    "Marmota monax")
 target_species_clean <- gsub(" ", "_", target_species)
+
+
 
 
 # Read in the grid
@@ -84,7 +82,11 @@ if (!file.exists("intermediate/inat_grid_cts.csv") | redo_inat) {
 
 #### Make camera metadata and detection histories ####
 source("dat_helper.R")
-if (!file.exists("intermediate/CT") | redo_dethist) {
+if (!file.exists("intermediate/dethist_list.RDS") | redo_dethist) {
+  ct_dat <- readxl::read_xlsx("data/final_DCCC_data.xlsx", sheet = 2) %>% 
+    filter(Actual.Long > -77.3) %>% 
+    filter(!Species.Name %in% specs_to_drop)
+  
   
   deployments <- ct_dat %>% 
     group_by(Deployment.ID, 
@@ -110,7 +112,7 @@ if (!file.exists("intermediate/CT") | redo_dethist) {
   for (i in 1:length(target_species)) {
     dethist_list[[i]] <- make_detection_hist(
       species = target_species[i], deployments, sequences, 
-      detection_window_days = 1, detection_gap_days = 0)
+      detection_window_days = 3, detection_gap_days = 0)
   }
   
   saveRDS(dethist_list, "intermediate/dethist_list.RDS")
